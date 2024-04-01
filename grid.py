@@ -42,6 +42,7 @@ class FPGrid:
         self.point = 1
         self.cursor_line = 1
         self.poly_points = []
+        self.visual_points = []
         self.poly_lines = []
         self.col_width = self.CANVAS_WIDTH / self.COLS
         self.row_height = self.CANVAS_HEIGHT / self.ROWS
@@ -79,13 +80,25 @@ class FPGrid:
         self.clear_grid()
 
     def clear_grid(self):
-        self.poly_points = []
-        self.poly_lines = []
+        print("points = ", self.poly_points, "\nlines = ",self.poly_lines)
+
+        for point in self.visual_points:
+            self.c.delete(point)
+        self.poly_points.clear()
+
+        for line in self.poly_lines:
+            self.c.delete(line[0])
+            self.c.delete(line[1])
+        self.poly_lines.clear()
+
+        print("bpoints = ", self.poly_points, "\nblines = ", self.poly_lines)
+        self.c.delete(self.cur_text)
+        self.c.delete(self.point)
+        self.c.delete(self.cursor_line)
         self.c.delete()
 
     def add_grid_point(self, x: int, y: int):
         self.poly_points.append((x, y))
-        print(self.poly_points)
 
     def callback(self, event):
 
@@ -94,7 +107,6 @@ class FPGrid:
             col = int(self.callback_x / self.col_width)
             row = int(self.callback_y / self.row_height)
             do_pass = False
-            print(col, self.poly_points[0][0])
             for p in self.poly_points:  # checks if the end of polygon is connected to the start
                 if (col, row) == p and self.poly_points.index(p) != 0:
                     do_pass = True
@@ -131,7 +143,7 @@ class FPGrid:
             p2y = self.poly_points[i + 1][1] * self.col_width + (self.col_width / 2)
             text_pos = midpoint(p1x, p2x, p1y, p2y)
             length = round(distance_point_to_point((p1x, p1y), (p2x, p2y)) / self.row_height, 2)
-            self.c.create_oval(p1x-5, p1y-5, p1x+5, p1y+5, fill="blue")
+            self.visual_points.append(self.c.create_oval(p1x-5, p1y-5, p1x+5, p1y+5, fill="blue")) # This should be stored with self.poly_points but i was lazzy
             # Format distance output to feet/inches
             if length > 99.99:
                 feet = str(length)[0:3]
@@ -145,14 +157,16 @@ class FPGrid:
             line = (self.c.create_line(p1x, p1y, p2x, p2y, fill="blue"),
                     self.c.create_text(text_pos, text=f"{feet} ft. {inch} in.")
                     )
+            print("New line being added to 'poly_lines' is: ", line)
             self.poly_lines.append(line)
 
         # Create last visual point
         px = self.poly_points[-1][0] * self.row_height + (self.row_height / 2)
         py = self.poly_points[-1][1] * self.col_width + (self.col_width / 2)
-        self.c.create_oval(px - 5, py - 5, px + 5, py + 5, fill="blue")
+        self.visual_points.append(self.c.create_oval(px - 5, py - 5, px + 5, py + 5, fill="blue"))
 
     def update_grid(self, event):
+
         # Bounds check for grid snap
         if event.x > self.CANVAS_WIDTH - 1:
             event.x = self.CANVAS_WIDTH - 1
@@ -164,7 +178,6 @@ class FPGrid:
             event.y = self.row_height / 2
 
         # Grid snapping for polygon point
-
         self.callback_x = event.x
         self.callback_y = event.y
         closest_x_point = int(event.x / self.col_width) * self.col_width - (self.col_width / 2) + self.col_width
