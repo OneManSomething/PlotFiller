@@ -9,7 +9,7 @@ from tktooltip import ToolTip
 # TODO: Add custom plot options
 # TODONE: Hide rectangle plot options
 # TODO: Beautify output, objectify the floor plans, ?add images?
-# TODO: **Implement math for grid system geometry collision checking**
+# TODO: ***Implement math for grid system geometry collision checking***   <GET IT OVER WITH PUSSY
 # TODO: Add floor plans
 # TODO: Delete floor plans
 # TODO: Edit floor plans

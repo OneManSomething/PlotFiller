@@ -80,7 +80,7 @@ class FPGrid:
         self.clear_grid()
 
     def clear_grid(self):
-        print("points = ", self.poly_points, "\nlines = ",self.poly_lines)
+        print("points = ", self.poly_points, "\nlines = ", self.poly_lines)
 
         for point in self.visual_points:
             self.c.delete(point)
@@ -91,25 +91,26 @@ class FPGrid:
             self.c.delete(line[1])
         self.poly_lines.clear()
 
-        print("bpoints = ", self.poly_points, "\nblines = ", self.poly_lines)
+        print("points = ", self.poly_points, "\nlines = ", self.poly_lines)
         self.c.delete(self.cur_text)
         self.c.delete(self.point)
         self.c.delete(self.cursor_line)
         self.c.delete()
 
-    def add_grid_point(self, x: int, y: int):
+    def add_grid_point(self, x: int, y: int):  # really???
         self.poly_points.append((x, y))
 
     def callback(self, event):
 
         # Logic for point creation
-        if event.x != self.callback_x and event.y != self.callback_y:  # check if point is clicked
+        point_is_clicked = event.x != self.callback_x and event.y != self.callback_y
+        if point_is_clicked:
             col = int(self.callback_x / self.col_width)
             row = int(self.callback_y / self.row_height)
             do_pass = False
             for p in self.poly_points:  # checks if the end of polygon is connected to the start
                 if (col, row) == p and self.poly_points.index(p) != 0:
-                    do_pass = True
+                    do_pass = True                                    # GET RID OF THIS SHIT.  !FUCK!
                     tk.messagebox.showwarning(title="Open Plot Edge",
                                               message="Each point on the plot must be connected")
             if do_pass:
@@ -119,6 +120,7 @@ class FPGrid:
                                                   message="Would you like to save these plot dimensions?")
                 if yon_box1:
                     self.save_plot()
+                    return
 
         elif len(self.poly_points) <= 1:
             col = int(event.x / self.col_width)
@@ -143,7 +145,7 @@ class FPGrid:
             p2y = self.poly_points[i + 1][1] * self.col_width + (self.col_width / 2)
             text_pos = midpoint(p1x, p2x, p1y, p2y)
             length = round(distance_point_to_point((p1x, p1y), (p2x, p2y)) / self.row_height, 2)
-            self.visual_points.append(self.c.create_oval(p1x-5, p1y-5, p1x+5, p1y+5, fill="blue")) # This should be stored with self.poly_points but i was lazzy
+            self.visual_points.append(self.c.create_oval(p1x-5, p1y-5, p1x+5, p1y+5, fill="blue"))  # This should be stored with self.poly_points, but I was lazy
             # Format distance output to feet/inches
             if length > 99.99:
                 feet = str(length)[0:3]
