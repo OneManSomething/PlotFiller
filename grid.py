@@ -14,8 +14,7 @@ import math
 
 # TODONE: Add length readout for polygon edge
 # TODO: Add ability to edit point location
-# TODO: Add option to set a curve for points/edges
-
+# TODO: Add option to set a curve for points/edges  ***fuck this
 
 def midpoint(x1, x2, y1, y2):
     """Returns middle point between point 1 and point 2"""

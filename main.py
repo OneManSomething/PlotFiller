@@ -4,7 +4,7 @@ import tkinter as tk
 # from PIL import Image
 from grid import FPGrid
 import json
-from tktooltip import ToolTip
+from CTkToolTip import CTkToolTip
 
 # TODO: Add custom plot options
 # TODONE: Hide rectangle plot options
@@ -22,6 +22,17 @@ TEXT_COLOR = "white"
 BUTTON_COLOR = "#5BB68B"
 APP_BG_COLOR = "#344049"
 FRAME_BG_COLOR = "#557084"
+
+
+class PlotWindow(ctk.CTkFrame):
+    def __init__(self, parent, *args, **kwargs):
+        ctk.CTkFrame.__init__(self, parent, *args, **kwargs)
+        self.parent = parent
+        self.CORNER_RAD = parent.CORNER_RAD
+        self.X_PAD = parent.X_PAD
+        self.Y_PAD = parent.Y_PAD
+        self.configure(height=300, width=200, fg_color=FRAME_BG_COLOR)
+        self.grid(column=0, row=0, pady=self.Y_PAD, padx=self.X_PAD, sticky=tk.NSEW)
 
 
 class CitySettings(ctk.CTkFrame):
@@ -71,7 +82,7 @@ class CitySettings(ctk.CTkFrame):
         self.save_city_settings = ctk.CTkButton(master=self, corner_radius=self.CORNER_RAD, width=100, height=30,
                                                 text="Save Setback Settings", command=self.save_city_settings)
         self.save_city_settings.grid(columnspan=2, column=0, row=5, pady=self.Y_PAD, padx=self.X_PAD)
-        ToolTip(self.save_city_settings, msg="No Fields are to be left empty", follow=True)
+        CTkToolTip(self.save_city_settings, message="No Fields are to be left empty", follow=True)
         self.update_entries()
 
     def update_entries(self, *args):
@@ -277,6 +288,7 @@ class MainApplication(tk.Tk):
     def __init__(self, *args, **kwargs):
         tk.Tk.__init__(self, *args, **kwargs)
         # Main window setup
+        self.plot_list_window = None
         self.customplot = None
         self.city_conf_window = None
         self.CORNER_RAD = 5
@@ -299,6 +311,7 @@ class MainApplication(tk.Tk):
         # Top menu bar
         self.mainMenu = tk.Menu(master=self)
         self.mainMenu.add_command(label="City Settings", command=self.open_city_settings)
+        self.mainMenu.add_command(label="Plots", command=self.open_plot_menu)
         self.mainMenu.add_command(label="Exit", command=self.destroy)
         self.config(menu=self.mainMenu)
 
@@ -325,6 +338,23 @@ class MainApplication(tk.Tk):
             self.plot_spec_frame.configure(height=10)
         else:
             self.plot_spec_frame.radio_state.set(value=1)
+
+    def open_plot_menu(self):
+        if (self.plot_spec_frame.winfo_ismapped(), self.output_frame.winfo_ismapped()) != (1, 1):
+            self.plot_list_window.grid_remove()
+            self.rowconfigure(1, weight=2)
+            self.output_frame.grid(column=0, row=1, sticky=tk.NSEW, padx=self.X_PAD,
+                                   pady=self.Y_PAD)
+            self.plot_spec_frame.grid(column=0, row=0, sticky=tk.NSEW, padx=self.X_PAD,
+                                      pady=self.Y_PAD)
+        else:
+            self.plot_spec_frame.grid_remove()
+            self.output_frame.grid_remove()
+            self.rowconfigure(1, weight=0)
+            try:
+                self.plot_list_window.grid()
+            except AttributeError:
+                self.plot_list_window = PlotWindow(self)
 
     def open_city_settings(self):
 
