@@ -3,14 +3,14 @@ import customtkinter as ctk
 import tkinter as tk
 # from PIL import Image
 # from grid import FPGrid
-from math import ceil, floor
+from math import floor
 import json
 from CTkToolTip import CTkToolTip
 
 # # Minimum Viable Product:
 # TODO: Add floor plans
 # TODO: Delete floor plans
-# TODO: Edit floor plans
+# TODONE: Edit floor plans
 
 # ### After MVP uncomment 229-237 & 332-341 &  247-248 & 285-286 ###
 # ### And reimport FPGrid ###
@@ -45,6 +45,8 @@ class PlotWindow(ctk.CTkFrame):
 class FloorPlanWindow(ctk.CTkFrame):
     def __init__(self, parent, *args, **kwargs):
         ctk.CTkFrame.__init__(self, parent, *args, **kwargs)
+        self.edit_floor_plan_modules = None
+        self.floor_plan_name = None
         self.parent = parent
         self.CORNER_RAD = parent.CORNER_RAD
         self.X_PAD = parent.X_PAD
@@ -52,28 +54,78 @@ class FloorPlanWindow(ctk.CTkFrame):
         self.configure(height=300, width=200, fg_color=FRAME_BG_COLOR)
         self.grid(column=0, row=0, pady=self.Y_PAD, padx=self.X_PAD, sticky=tk.NSEW)
 
-
         with open("FloorPlans.json", "r+") as f:  # Open the json file containing floor plan data and city settings
             self.data = json.load(f)
 
         floor_plans = self.data["FloorPlans"]
-        i=1
-        l=1
+        i = 1
+        j = 1
         self.foo_list = []
         for plan in floor_plans:
             i += 1
-            l += 1
+            j += 1
             foo = (ctk.CTkButton(master=self, corner_radius=self.CORNER_RAD,
                                  width=50, height=20, text=plan,
                                  text_color=TEXT_COLOR), plan)
-            foo[0].grid(column=(l % 2), row=floor(i/2), padx=self.X_PAD, pady=self.Y_PAD)
+            foo[0].grid(column=(j % 2), row=floor(i/2), padx=self.X_PAD, pady=self.Y_PAD)
             foo[0].configure(command=lambda c=foo: self.edit_floor_plan(floor_plan=c))
             self.foo_list.append(foo)
 
     def edit_floor_plan(self, floor_plan):
+        self.floor_plan_name = floor_plan[1]
+        floor_plan_width = self.data["FloorPlans"][self.floor_plan_name][0]
+        floor_plan_length = self.data["FloorPlans"][self.floor_plan_name][1]
+        self.edit_floor_plan_modules = []
         for foo in self.foo_list:
             foo[0].grid_remove()
-        #####################################################################
+        width_entry = ctk.CTkEntry(master=self, corner_radius=self.CORNER_RAD, width=50, height=20)
+        width_entry.grid(column=1, row=1, pady=self.Y_PAD, padx=self.X_PAD)
+        width_entry_text = ctk.CTkLabel(master=self, corner_radius=self.CORNER_RAD,
+                                        width=50, height=20, text="Width",
+                                        text_color=TEXT_COLOR)
+        width_entry_text.grid(column=0, row=1, pady=self.Y_PAD, padx=self.X_PAD)
+        width_entry.insert(0, floor_plan_width)
+        length_entry = ctk.CTkEntry(master=self, corner_radius=self.CORNER_RAD, width=50, height=20)
+        length_entry.grid(column=1, row=2, pady=self.Y_PAD, padx=self.X_PAD)
+        length_entry_text = ctk.CTkLabel(master=self, corner_radius=self.CORNER_RAD,
+                                         width=50, height=20, text="length",
+                                         text_color=TEXT_COLOR)
+        length_entry_text.grid(column=0, row=2, pady=self.Y_PAD, padx=self.X_PAD)
+        length_entry.insert(0, floor_plan_length)
+        save_changes = ctk.CTkButton(master=self, corner_radius=self.CORNER_RAD,
+                                     width=50, height=20, text="Save Changes",
+                                     text_color=TEXT_COLOR, command=self.save_changes)
+        save_changes.grid(column=0, row=3, pady=self.Y_PAD, padx=self.X_PAD)
+        cancel_changes = ctk.CTkButton(master=self, corner_radius=self.CORNER_RAD,
+                                       width=50, height=20, text="Cancel",
+                                       text_color=TEXT_COLOR, command=self.cancel_changes)
+        cancel_changes.grid(column=1, row=3, pady=self.Y_PAD, padx=self.X_PAD)
+        self.edit_floor_plan_modules.append((cancel_changes, save_changes, length_entry,
+                                             length_entry_text, width_entry_text, width_entry))
+
+    def save_changes(self):
+        new_length = int(self.edit_floor_plan_modules[0][2].get())
+        new_width = int(self.edit_floor_plan_modules[0][5].get())
+
+        with open("FloorPlans.json", "r+") as f:  # Open floor plan data/city settings .json
+            self.data = json.load(f)
+
+        self.data["FloorPlans"][self.floor_plan_name] = [new_width, new_length]
+
+        with open("FloorPlans.json", "w+") as f:  # Open floor plan data/city settings .json
+            json.dump(self.data, fp=f)
+
+        for thing in self.edit_floor_plan_modules[0]:
+            thing.destroy()
+        for foo in self.foo_list:
+            foo[0].grid()
+            
+    def cancel_changes(self):
+        for thing in self.edit_floor_plan_modules[0]:
+            thing.destroy()
+        for foo in self.foo_list:
+            foo[0].grid()
+
 
 class CitySettings(ctk.CTkFrame):
     def __init__(self, parent, *args, **kwargs):
@@ -328,6 +380,7 @@ class MainApplication(tk.Tk):
     def __init__(self, *args, **kwargs):
         tk.Tk.__init__(self, *args, **kwargs)
         # Main window setup
+        self.floor_plan_window = None
         self.plot_list_window = None
         self.customplot = None
         self.city_conf_window = None
