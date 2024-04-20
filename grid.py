@@ -1,8 +1,7 @@
 import json
 import tkinter as tk
 from tkinter import messagebox
-import math
-
+from math import sqrt
 
 # TODONE: draw line from point to point
 # TODONE: Add point at edge
@@ -25,7 +24,7 @@ def distance_point_to_point(point1, point2):
     """Returns the distance from point 1 to point 2"""
     x1, y1 = point1
     x2, y2 = point2
-    return math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2)
+    return sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2)
 
 
 class FPGrid:
