@@ -58,25 +58,25 @@ class FloorPlanWindow(ctk.CTkFrame):
             self.data = json.load(f)
 
         floor_plans = self.data["FloorPlans"]
-        i = 1
-        j = 1
-        self.foo_list = []
+        i = 2
+        j = 2
+        self.FPButton_list = []
         for plan in floor_plans:
             i += 1
             j += 1
-            foo = (ctk.CTkButton(master=self, corner_radius=self.CORNER_RAD,
-                                 width=50, height=20, text=plan,
-                                 text_color=TEXT_COLOR), plan)
-            foo[0].grid(column=(j % 2), row=floor(i/2), padx=self.X_PAD, pady=self.Y_PAD)
-            foo[0].configure(command=lambda c=foo: self.edit_floor_plan(floor_plan=c))
-            self.foo_list.append(foo)
+            fp_button = (ctk.CTkButton(master=self, corner_radius=self.CORNER_RAD,
+                                      width=50, height=20, text=plan,
+                                      text_color=TEXT_COLOR), plan)
+            fp_button[0].grid(column=(j % 3), row=floor(i/3), padx=self.X_PAD+20, pady=self.Y_PAD)
+            fp_button[0].configure(command=lambda c=fp_button: self.edit_floor_plan(floor_plan=c))
+            self.FPButton_list.append(fp_button)
 
     def edit_floor_plan(self, floor_plan):
         self.floor_plan_name = floor_plan[1]
         floor_plan_width = self.data["FloorPlans"][self.floor_plan_name][0]
         floor_plan_length = self.data["FloorPlans"][self.floor_plan_name][1]
         self.edit_floor_plan_modules = []
-        for foo in self.foo_list:
+        for foo in self.FPButton_list:
             foo[0].grid_remove()
         width_entry = ctk.CTkEntry(master=self, corner_radius=self.CORNER_RAD, width=50, height=20)
         width_entry.grid(column=1, row=1, pady=self.Y_PAD, padx=self.X_PAD)
@@ -117,13 +117,13 @@ class FloorPlanWindow(ctk.CTkFrame):
 
         for thing in self.edit_floor_plan_modules[0]:
             thing.destroy()
-        for foo in self.foo_list:
+        for foo in self.FPButton_list:
             foo[0].grid()
             
     def cancel_changes(self):
         for thing in self.edit_floor_plan_modules[0]:
             thing.destroy()
-        for foo in self.foo_list:
+        for foo in self.FPButton_list:
             foo[0].grid()
 
 
@@ -383,12 +383,12 @@ class MainApplication(tk.Tk):
         self.floor_plan_window = None
         self.plot_list_window = None
         self.customplot = None
-        self.city_conf_window = None
+        self.city_config_window = None
         self.CORNER_RAD = 5
         self.X_PAD = 5
         self.Y_PAD = 5
         self.configure(width=400, height=500, padx=1, pady=1, bg=APP_BG_COLOR)
-        self.minsize(width=275, height=500)
+        self.minsize(width=500, height=500)
         self.title("Plot-Filler")
         self.columnconfigure(0, weight=1)
         self.rowconfigure(0, weight=1)
@@ -440,45 +440,67 @@ class MainApplication(tk.Tk):
                                    pady=self.Y_PAD)
             self.plot_spec_frame.grid(column=0, row=0, sticky=tk.NSEW, padx=self.X_PAD,
                                       pady=self.Y_PAD)
-        match menu:
-            case 1:
-                if (self.plot_spec_frame.winfo_ismapped(), self.output_frame.winfo_ismapped()) != (1, 1):
-                    self.city_conf_window.grid_remove()
-                    grid_main_app_frame()
 
-                else:
-                    self.plot_spec_frame.grid_remove()
-                    self.output_frame.grid_remove()
+        def check_is_mapped(module):
+            module_exists = False
+            children = MainApplication.winfo_children(self)
+            for child in children:
+                if module == str(child):
+                    module_exists = True
+                    if child.winfo_ismapped():
+                        return True
+                    else:
+                        return False
+            if module_exists == False:
+                return False
+
+        def hide_mapped(keep_mapped):
+            children = MainApplication.winfo_children(self)
+            for child in children:
+                if check_is_mapped(str(child)) and str(child) != keep_mapped:
+                    try:
+                        child.grid_remove()
+                    except AttributeError:
+                        pass
+
+        match menu:
+
+            case 1:
+                if check_is_mapped(".!citysettings") == False:
+                    hide_mapped(keep_mapped=".!citysettings")
                     self.rowconfigure(1, weight=0)
                     try:
-                        self.city_conf_window.grid()
+                        self.city_config_window.grid()
                     except AttributeError:
-                        self.city_conf_window = CitySettings(self)
-            case 2:
-                if (self.plot_spec_frame.winfo_ismapped(), self.output_frame.winfo_ismapped()) != (1, 1):
-                    self.plot_list_window.grid_remove()
-                    grid_main_app_frame()
+                        self.city_config_window = CitySettings(self)
                 else:
-                    self.plot_spec_frame.grid_remove()
-                    self.output_frame.grid_remove()
+                    self.city_config_window.grid_remove()
+                    grid_main_app_frame()
+
+            case 2:
+                if check_is_mapped(".!plotwindow") == False:
+                    hide_mapped(keep_mapped=".!plotwindow")
                     self.rowconfigure(1, weight=0)
                     try:
                         self.plot_list_window.grid()
                     except AttributeError:
                         self.plot_list_window = PlotWindow(self)
-            case 3:
-                if (self.plot_spec_frame.winfo_ismapped(), self.output_frame.winfo_ismapped()) != (1, 1):
-                    self.floor_plan_window.grid_remove()
+                else:
+                    self.plot_list_window.grid_remove()
                     grid_main_app_frame()
 
-                else:
-                    self.plot_spec_frame.grid_remove()
-                    self.output_frame.grid_remove()
+            case 3:
+                if check_is_mapped(".!floorplanwindow") == False:
+                    hide_mapped(keep_mapped=".!floorplanwindow")
                     self.rowconfigure(1, weight=0)
                     try:
                         self.floor_plan_window.grid()
                     except AttributeError:
                         self.floor_plan_window = FloorPlanWindow(self)
+                else:
+                    self.floor_plan_window.grid_remove()
+                    grid_main_app_frame()
+
             case _:
                 pass
 
