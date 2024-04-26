@@ -9,7 +9,7 @@ from CTkToolTip import CTkToolTip
 
 # # Minimum Viable Product:
 # TODO: Add floor plans
-# TODO: Delete floor plans
+# TODONE: Delete floor plans
 # TODONE: Edit floor plans
 
 # ### After MVP uncomment 229-237 & 332-341 &  247-248 & 285-286 ###
@@ -53,7 +53,9 @@ class FloorPlanWindow(ctk.CTkFrame):
         self.Y_PAD = parent.Y_PAD
         self.configure(height=300, width=200, fg_color=FRAME_BG_COLOR)
         self.grid(column=0, row=0, pady=self.Y_PAD, padx=self.X_PAD, sticky=tk.NSEW)
+        self.map_floorplans()
 
+    def map_floorplans(self):
         with open("FloorPlans.json", "r+") as f:  # Open the json file containing floor plan data and city settings
             self.data = json.load(f)
 
@@ -66,7 +68,7 @@ class FloorPlanWindow(ctk.CTkFrame):
             j += 1
             fp_button = (ctk.CTkButton(master=self, corner_radius=self.CORNER_RAD,
                                       width=50, height=20, text=plan,
-                                      text_color=TEXT_COLOR), plan)
+                                      text_color=TEXT_COLOR, fg_color=BUTTON_COLOR), plan)
             fp_button[0].grid(column=(j % 3), row=floor(i/3), padx=self.X_PAD+20, pady=self.Y_PAD)
             fp_button[0].configure(command=lambda c=fp_button: self.edit_floor_plan(floor_plan=c))
             self.FPButton_list.append(fp_button)
@@ -94,14 +96,39 @@ class FloorPlanWindow(ctk.CTkFrame):
         length_entry.insert(0, floor_plan_length)
         save_changes = ctk.CTkButton(master=self, corner_radius=self.CORNER_RAD,
                                      width=50, height=20, text="Save Changes",
-                                     text_color=TEXT_COLOR, command=self.save_changes)
+                                     text_color=TEXT_COLOR, fg_color=BUTTON_COLOR, command=self.save_changes)
         save_changes.grid(column=0, row=3, pady=self.Y_PAD, padx=self.X_PAD)
         cancel_changes = ctk.CTkButton(master=self, corner_radius=self.CORNER_RAD,
                                        width=50, height=20, text="Cancel",
-                                       text_color=TEXT_COLOR, command=self.cancel_changes)
+                                       text_color=TEXT_COLOR, fg_color=BUTTON_COLOR, command=self.cancel_changes)
         cancel_changes.grid(column=1, row=3, pady=self.Y_PAD, padx=self.X_PAD)
+        delete_floor_plan_button = ctk.CTkButton(master=self, fg_color=BUTTON_COLOR, corner_radius=self.CORNER_RAD,
+                                                 width=50, height=20, text="Delete",
+                                                 text_color=TEXT_COLOR, command=lambda c=floor_plan: self.delete_floor_plan(c))
+        delete_floor_plan_button.grid(column=2, row=3, pady=self.Y_PAD, padx=self.X_PAD)
         self.edit_floor_plan_modules.append((cancel_changes, save_changes, length_entry,
-                                             length_entry_text, width_entry_text, width_entry))
+                                             length_entry_text, width_entry_text, width_entry, delete_floor_plan_button))
+
+    def delete_floor_plan(self, floor_plan):
+        confirmed = tk.messagebox.askokcancel(title="Delete Floor Plan",
+                                              message=f"Are your sure you want to delete '{floor_plan[1]}'?")
+        if confirmed:
+            self.FPButton_list.remove(self.FPButton_list[self.FPButton_list.index(floor_plan)])
+            floor_plan[0].destroy()
+
+            with open("FloorPlans.json", "r+") as f:  # Open floor plan data/city settings .json
+                data = json.load(f)
+
+            del data["FloorPlans"][self.floor_plan_name]
+
+            with open("FloorPlans.json", "w+") as f:  # Open floor plan data/city settings .json
+                json.dump(data, fp=f)
+
+            for thing in self.edit_floor_plan_modules[0]:
+                thing.destroy()
+            self.map_floorplans()
+        else:
+            pass
 
     def save_changes(self):
         new_length = int(self.edit_floor_plan_modules[0][2].get())
@@ -119,7 +146,7 @@ class FloorPlanWindow(ctk.CTkFrame):
             thing.destroy()
         for foo in self.FPButton_list:
             foo[0].grid()
-            
+
     def cancel_changes(self):
         for thing in self.edit_floor_plan_modules[0]:
             thing.destroy()
@@ -172,6 +199,7 @@ class CitySettings(ctk.CTkFrame):
                                                       .grid(column=0, row=4, pady=self.Y_PAD, padx=self.X_PAD))
 
         self.save_city_settings = ctk.CTkButton(master=self, corner_radius=self.CORNER_RAD, width=100, height=30,
+                                                fg_color=BUTTON_COLOR,
                                                 text="Save Setback Settings", command=self.save_city_settings)
         self.save_city_settings.grid(columnspan=2, column=0, row=5, pady=self.Y_PAD, padx=self.X_PAD)
         CTkToolTip(self.save_city_settings, message="No Fields are to be left empty", follow=True)
