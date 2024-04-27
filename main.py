@@ -8,7 +8,7 @@ import json
 from CTkToolTip import CTkToolTip
 
 # # Minimum Viable Product:
-# TODO: Add floor plans
+# TODONE: Add floor plans
 # TODONE: Delete floor plans
 # TODONE: Edit floor plans
 
@@ -45,41 +45,85 @@ class PlotWindow(ctk.CTkFrame):
 class FloorPlanWindow(ctk.CTkFrame):
     def __init__(self, parent, *args, **kwargs):
         ctk.CTkFrame.__init__(self, parent, *args, **kwargs)
-        self.edit_floor_plan_modules = None
+        self.edit_floor_plan_modules = []
         self.floor_plan_name = None
+        self.data = None
         self.parent = parent
         self.CORNER_RAD = parent.CORNER_RAD
         self.X_PAD = parent.X_PAD
         self.Y_PAD = parent.Y_PAD
+        self.FPButton_list = []
         self.configure(height=300, width=200, fg_color=FRAME_BG_COLOR)
         self.grid(column=0, row=0, pady=self.Y_PAD, padx=self.X_PAD, sticky=tk.NSEW)
-        self.map_floorplans()
+        self.new_floor_plan_button = (ctk.CTkButton(master=self, corner_radius=self.CORNER_RAD,
+                                                    width=420, height=35, text="Add New Floor Plan",
+                                                    text_color=TEXT_COLOR, fg_color=BUTTON_COLOR,
+                                                    command=self.add_floor_plan), '')
+        self.new_floor_plan_button[0].grid(columnspan=3, column=0, row=1, padx=self.X_PAD, pady=self.Y_PAD)
+        self.map_floor_plans()
 
-    def map_floorplans(self):
+    def map_floor_plans(self):
+        for i in range(len(self.FPButton_list)):
+            if self.FPButton_list[i][1] != '':
+                self.FPButton_list[i][0].destroy()
+            else:
+                self.FPButton_list[i][0].grid()
+        self.FPButton_list = []
+        self.FPButton_list.append(self.new_floor_plan_button)
         with open("FloorPlans.json", "r+") as f:  # Open the json file containing floor plan data and city settings
             self.data = json.load(f)
 
         floor_plans = self.data["FloorPlans"]
         i = 2
         j = 2
-        self.FPButton_list = []
         for plan in floor_plans:
             i += 1
             j += 1
             fp_button = (ctk.CTkButton(master=self, corner_radius=self.CORNER_RAD,
-                                      width=50, height=20, text=plan,
-                                      text_color=TEXT_COLOR, fg_color=BUTTON_COLOR), plan)
-            fp_button[0].grid(column=(j % 3), row=floor(i/3), padx=self.X_PAD+20, pady=self.Y_PAD)
+                                       width=120, height=25, text=plan,
+                                       text_color=TEXT_COLOR, fg_color=BUTTON_COLOR), plan)
+            fp_button[0].grid(column=(j % 3), row=floor(i / 3) + 1, padx=self.X_PAD + 20, pady=self.Y_PAD)
             fp_button[0].configure(command=lambda c=fp_button: self.edit_floor_plan(floor_plan=c))
             self.FPButton_list.append(fp_button)
+    def add_floor_plan(self):
+        for FPButton in self.FPButton_list:
+            FPButton[0].grid_remove()
+        name_entry = ctk.CTkEntry(master=self, corner_radius=self.CORNER_RAD, width=50, height=20)
+        name_entry.grid(column=1, row=0, pady=self.Y_PAD, padx=self.X_PAD)
+        name_entry_text = ctk.CTkLabel(master=self, corner_radius=self.CORNER_RAD,
+                                       width=50, height=20, text="Name",
+                                       text_color=TEXT_COLOR)
+        name_entry_text.grid(column=0, row=0, pady=self.Y_PAD, padx=self.X_PAD)
+        width_entry = ctk.CTkEntry(master=self, corner_radius=self.CORNER_RAD, width=50, height=20)
+        width_entry.grid(column=1, row=1, pady=self.Y_PAD, padx=self.X_PAD)
+        width_entry_text = ctk.CTkLabel(master=self, corner_radius=self.CORNER_RAD,
+                                        width=50, height=20, text="Width",
+                                        text_color=TEXT_COLOR)
+        width_entry_text.grid(column=0, row=1, pady=self.Y_PAD, padx=self.X_PAD)
+        length_entry = ctk.CTkEntry(master=self, corner_radius=self.CORNER_RAD, width=50, height=20)
+        length_entry.grid(column=1, row=2, pady=self.Y_PAD, padx=self.X_PAD)
+        length_entry_text = ctk.CTkLabel(master=self, corner_radius=self.CORNER_RAD,
+                                         width=50, height=20, text="length",
+                                         text_color=TEXT_COLOR)
+        length_entry_text.grid(column=0, row=2, pady=self.Y_PAD, padx=self.X_PAD)
+        save_changes = ctk.CTkButton(master=self, corner_radius=self.CORNER_RAD,
+                                     width=50, height=20, text="Save Floor Plan",
+                                     text_color=TEXT_COLOR, fg_color=BUTTON_COLOR, command=self.save_new_floor_plan)
+        save_changes.grid(column=0, row=3, pady=self.Y_PAD, padx=self.X_PAD)
+        cancel_changes = ctk.CTkButton(master=self, corner_radius=self.CORNER_RAD,
+                                       width=50, height=20, text="Cancel",
+                                       text_color=TEXT_COLOR, fg_color=BUTTON_COLOR, command=self.cancel_changes)
+        cancel_changes.grid(column=1, row=3, pady=self.Y_PAD, padx=self.X_PAD)
+        self.edit_floor_plan_modules.append((name_entry,  length_entry,  width_entry, cancel_changes,
+                                             save_changes, name_entry_text,
+                                             length_entry_text, width_entry_text))
 
     def edit_floor_plan(self, floor_plan):
         self.floor_plan_name = floor_plan[1]
         floor_plan_width = self.data["FloorPlans"][self.floor_plan_name][0]
         floor_plan_length = self.data["FloorPlans"][self.floor_plan_name][1]
-        self.edit_floor_plan_modules = []
-        for foo in self.FPButton_list:
-            foo[0].grid_remove()
+        for FPButton in self.FPButton_list:
+            FPButton[0].grid_remove()
         width_entry = ctk.CTkEntry(master=self, corner_radius=self.CORNER_RAD, width=50, height=20)
         width_entry.grid(column=1, row=1, pady=self.Y_PAD, padx=self.X_PAD)
         width_entry_text = ctk.CTkLabel(master=self, corner_radius=self.CORNER_RAD,
@@ -104,10 +148,12 @@ class FloorPlanWindow(ctk.CTkFrame):
         cancel_changes.grid(column=1, row=3, pady=self.Y_PAD, padx=self.X_PAD)
         delete_floor_plan_button = ctk.CTkButton(master=self, fg_color=BUTTON_COLOR, corner_radius=self.CORNER_RAD,
                                                  width=50, height=20, text="Delete",
-                                                 text_color=TEXT_COLOR, command=lambda c=floor_plan: self.delete_floor_plan(c))
+                                                 text_color=TEXT_COLOR,
+                                                 command=lambda c=floor_plan: self.delete_floor_plan(c))
         delete_floor_plan_button.grid(column=2, row=3, pady=self.Y_PAD, padx=self.X_PAD)
         self.edit_floor_plan_modules.append((cancel_changes, save_changes, length_entry,
-                                             length_entry_text, width_entry_text, width_entry, delete_floor_plan_button))
+                                             length_entry_text, width_entry_text, width_entry,
+                                             delete_floor_plan_button))
 
     def delete_floor_plan(self, floor_plan):
         confirmed = tk.messagebox.askokcancel(title="Delete Floor Plan",
@@ -126,9 +172,32 @@ class FloorPlanWindow(ctk.CTkFrame):
 
             for thing in self.edit_floor_plan_modules[0]:
                 thing.destroy()
-            self.map_floorplans()
+            self.edit_floor_plan_modules = []
+            print(self.FPButton_list[0])
+            self.map_floor_plans()
         else:
             pass
+
+    def save_new_floor_plan(self):
+        print(self.edit_floor_plan_modules)
+        new_name = str(self.edit_floor_plan_modules[0][0].get())
+        new_length = int(self.edit_floor_plan_modules[0][1].get())
+        new_width = int(self.edit_floor_plan_modules[0][2].get())
+
+        with open("FloorPlans.json", "r+") as f:  # Open floor plan data/city settings .json
+            self.data = json.load(f)
+
+        self.data["FloorPlans"][new_name] = [new_width, new_length]
+
+        with open("FloorPlans.json", "w+") as f:  # Open floor plan data/city settings .json
+            json.dump(self.data, fp=f)
+
+        for thing in self.edit_floor_plan_modules[0]:
+            thing.destroy()
+        self.edit_floor_plan_modules = []
+        for foo in self.FPButton_list:
+            foo[0].grid()
+        self.map_floor_plans()
 
     def save_changes(self):
         new_length = int(self.edit_floor_plan_modules[0][2].get())
@@ -144,12 +213,14 @@ class FloorPlanWindow(ctk.CTkFrame):
 
         for thing in self.edit_floor_plan_modules[0]:
             thing.destroy()
+        self.edit_floor_plan_modules = []
         for foo in self.FPButton_list:
             foo[0].grid()
 
     def cancel_changes(self):
         for thing in self.edit_floor_plan_modules[0]:
             thing.destroy()
+        self.edit_floor_plan_modules = []
         for foo in self.FPButton_list:
             foo[0].grid()
 
@@ -439,15 +510,15 @@ class MainApplication(tk.Tk):
 
     def sel(self):
         """Runs when the radio button for plot type is pressed"""
-        state = self.plot_spec_frame.radio_state.get()
-        if state == 1:                                  # Set UI to the rectangle plot input
-            self.plot_spec_frame.plot_width.grid()
-            self.plot_spec_frame.pwe_text.grid()
-            self.plot_spec_frame.plot_length.grid()
-            self.plot_spec_frame.ple_text.grid()
-            self.plot_spec_frame.city_selection.grid()
-            self.plot_spec_frame.check_fp.grid()
-            self.customplot.c.grid_remove()
+        # state = self.plot_spec_frame.radio_state.get()
+        # if state == 1:                                  # Set UI to the rectangle plot input
+        #     self.plot_spec_frame.plot_width.grid()
+        #     self.plot_spec_frame.pwe_text.grid()
+        #     self.plot_spec_frame.plot_length.grid()
+        #     self.plot_spec_frame.ple_text.grid()
+        #     self.plot_spec_frame.city_selection.grid()
+        #     self.plot_spec_frame.check_fp.grid()
+        #     self.customplot.c.grid_remove()
         # if state == 2:                                  # Set UI to the custom plot input
         #     self.customplot = FPGrid(parent=self, height=500, width=500, columns=15, rows=15, fine_voxel=10)
         #     self.customplot.c.grid(column=0, row=1, sticky=tk.NSEW)
@@ -458,8 +529,8 @@ class MainApplication(tk.Tk):
         #     self.plot_spec_frame.city_selection.grid_remove()
         #     self.plot_spec_frame.check_fp.grid_remove()
         #     self.plot_spec_frame.configure(height=10)
-        else:
-            self.plot_spec_frame.radio_state.set(value=1)
+        # else:
+        #     self.plot_spec_frame.radio_state.set(value=1)
 
     def menu_controller(self, menu: int):
         def grid_main_app_frame():
